@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "abgox.filename-lint",
+    "abgox.json-schema-plus",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.extension-test-runner"
+  ]
+}

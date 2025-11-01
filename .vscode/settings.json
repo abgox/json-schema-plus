@@ -1,0 +1,19 @@
+{
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "editor.formatOnSave": true,
+  "filename-lint.enabled": true,
+  "filename-lint.excludePatterns": [
+    "**/.github/ISSUE_TEMPLATE",
+    "readme.*.md",
+    "changelog.*.md",
+    "package.nls.*.json"
+  ],
+  "filename-lint.includePatterns": [
+    "**/.github/**",
+    "**/.vscode/**",
+    "src/**",
+    "*"
+  ]
+}

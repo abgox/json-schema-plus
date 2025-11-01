@@ -1,0 +1,9 @@
+{
+  "config.json-schema-plus.title": "Schema Plus Configuration",
+  "config.json-schema-plus.schemas.description": "- Provides multilingual dynamic schema matching for JSON Schema.\n- It allows defining different schema structures for various language environments through `urls`.",
+  "config.json-schema-plus.schemas.fileMatch": "- File path patterns to match JSON files.\n- Supports [glob syntax](https://code.visualstudio.com/docs/editor/glob-patterns).",
+  "config.json-schema-plus.schemas.url": "- Load this default schema if no matching schema is found in `urls`.",
+  "config.json-schema-plus.schemas.urls": "- An array to define schema structures for different languages.\n- Automatically loads the appropriate schema based on the current locale.\n- Falls back to the default schema defined in `url` if no match is found.",
+  "config.json-schema-plus.schemas.urls.language": "Language",
+  "config.json-schema-plus.schemas.urls.path": "Schema structure"
+}

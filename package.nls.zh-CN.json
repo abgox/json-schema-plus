@@ -1,0 +1,9 @@
+{
+  "config.json-schema-plus.title": "Schema Plus 配置",
+  "config.json-schema-plus.schemas.description": "- 增强的 JSON Schema 支持，具有动态语言匹配功能\n- 它可以通过 `urls` 定义不同语言环境下使用的 Schema 架构",
+  "config.json-schema-plus.schemas.fileMatch": "- 要匹配的 JSON 文件路径模式\n- 可以使用 [glob 语法](https://code.visualstudio.com/docs/editor/glob-patterns)",
+  "config.json-schema-plus.schemas.url": "- 如果 `urls` 中没有匹配到架构，则加载这个默认架构",
+  "config.json-schema-plus.schemas.urls": "- 一个数组，可以定义不同语言下的 schema 架构\n- 它会基于当前的语言环境，尝试加载对应的 schema 架构\n- 如果匹配失败，则加载 `url` 定义的默认架构",
+  "config.json-schema-plus.schemas.urls.language": "语言",
+  "config.json-schema-plus.schemas.urls.path": "schema 架构"
+}

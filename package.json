@@ -1,0 +1,179 @@
+{
+  "name": "json-schema-plus",
+  "displayName": "JSON Schema Plus",
+  "description": "Provides multilingual dynamic schema matching for JSON Schema.",
+  "type": "module",
+  "author": "abgox",
+  "publisher": "abgox",
+  "version": "0.0.1",
+  "license": "MIT",
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "schema",
+    "dynamic",
+    "language",
+    "json",
+    "i18n",
+    "matching"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abgox/json-schema-plus"
+  },
+  "homepage": "https://github.com/abgox/json-schema-plus",
+  "icon": "icon.png",
+  "bugs": {
+    "url": "https://github.com/abgox/json-schema-plus/issues"
+  },
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "activationEvents": [
+    "onLanguage:json",
+    "onLanguage:jsonc"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "%config.json-schema-plus.title%",
+      "properties": {
+        "json-schema-plus.schemas": {
+          "type": "array",
+          "markdownDescription": "%config.json-schema-plus.schemas.description%",
+          "description": "%config.json-schema-plus.schemas.description%",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "fileMatch": {
+                "type": "array",
+                "markdownDescription": "%config.json-schema-plus.schemas.fileMatch%",
+                "description": "%config.json-schema-plus.schemas.fileMatch%",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "uniqueItems": true
+                }
+              },
+              "urls": {
+                "type": "array",
+                "markdownDescription": "%config.json-schema-plus.schemas.urls%",
+                "description": "%config.json-schema-plus.schemas.urls%",
+                "uniqueItems": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "language": {
+                      "type": "string",
+                      "markdownDescription": "%config.json-schema-plus.schemas.urls.language%",
+                      "description": "%config.json-schema-plus.schemas.urls.language%",
+                      "enum": [
+                        "en",
+                        "en-US",
+                        "zh",
+                        "zh-CN",
+                        "zh-TW",
+                        "zh-HK",
+                        "en-GB",
+                        "de-DE",
+                        "fr-FR",
+                        "it-IT",
+                        "ja-JP",
+                        "ko-KR",
+                        "ru-RU",
+                        "es-ES",
+                        "pt-BR",
+                        "pt-PT",
+                        "pl-PL",
+                        "nl-NL",
+                        "sv-SE",
+                        "nb-NO",
+                        "da-DK",
+                        "fi-FI",
+                        "es-419",
+                        "fr-CA",
+                        "es-MX",
+                        "ar-SA",
+                        "tr-TR",
+                        "vi-VN",
+                        "th-TH",
+                        "uk-UA"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "markdownDescription": "%config.json-schema-plus.schemas.urls.path%",
+                      "description": "%config.json-schema-plus.schemas.urls.path%"
+                    }
+                  },
+                  "required": [
+                    "language",
+                    "path"
+                  ]
+                }
+              },
+              "url": {
+                "type": "string",
+                "markdownDescription": "%config.json-schema-plus.schemas.url%",
+                "description": "%config.json-schema-plus.schemas.url%"
+              }
+            },
+            "required": [
+              "fileMatch"
+            ]
+          },
+          "examples": [
+            [
+              {
+                "fileMatch": [
+                  "bucket/**/*.json"
+                ],
+                "urls": [
+                  {
+                    "language": "zh",
+                    "path": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
+                  },
+                  {
+                    "language": "en",
+                    "path": "https://schema.abgox.com/scoop-manifest.en-US.json"
+                  }
+                ],
+                "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
+              }
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "pnpm run compile && pnpm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.3.2",
+    "eslint": "^9.23.0",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "vscode-nls-i18n": "^0.2.4"
+  }
+}
