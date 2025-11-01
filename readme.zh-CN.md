@@ -49,7 +49,7 @@
       "urls": [
         {
           "language": "zh",
-          "path": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
+          "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
         },
       ],
       "url": "https://schema.abgox.com/scoop-manifest.en-US.json"

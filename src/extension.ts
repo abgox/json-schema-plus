@@ -109,7 +109,7 @@ function resolvePath(p: string): string {
 // 根据当前语言找到最匹配的 schema 路径
 function findBestMatchingSchema(
     currentLanguage: string,
-    urls?: Array<{ language: string; path: string }>,
+    urls?: Array<{ language: string; url: string }>,
     defaultUrl?: string
 ): string | undefined {
     // 如果没有 urls 数组，直接返回默认 url
@@ -122,7 +122,7 @@ function findBestMatchingSchema(
         (item) => item.language.toLowerCase() === currentLanguage.toLowerCase()
     );
     if (exactMatch) {
-        return exactMatch.path;
+        return exactMatch.url;
     }
 
     // 尝试匹配语言的主要部分（如 'zh-cn' 匹配 'zh'）
@@ -131,7 +131,7 @@ function findBestMatchingSchema(
         (item) => item.language.toLowerCase().split("-")[0] === languageMainPart
     );
     if (mainPartMatch) {
-        return mainPartMatch.path;
+        return mainPartMatch.url;
     }
 
     // 最后返回默认 url

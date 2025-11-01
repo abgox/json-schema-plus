@@ -49,7 +49,7 @@ An extension for [Visual Studio Code](https://code.visualstudio.com/) that provi
       "urls": [
         {
           "language": "zh",
-          "path": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
+          "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
         },
       ],
       "url": "https://schema.abgox.com/scoop-manifest.en-US.json"

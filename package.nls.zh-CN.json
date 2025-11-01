@@ -5,5 +5,5 @@
   "config.json-schema-plus.schemas.url": "- 如果 `urls` 中没有匹配到架构，则加载这个默认架构",
   "config.json-schema-plus.schemas.urls": "- 一个数组，可以定义不同语言下的 schema 架构\n- 它会基于当前的语言环境，尝试加载对应的 schema 架构\n- 如果匹配失败，则加载 `url` 定义的默认架构",
   "config.json-schema-plus.schemas.urls.language": "语言",
-  "config.json-schema-plus.schemas.urls.path": "schema 架构"
+  "config.json-schema-plus.schemas.urls.url": "schema 架构"
 }

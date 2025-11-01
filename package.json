@@ -5,7 +5,7 @@
   "type": "module",
   "author": "abgox",
   "publisher": "abgox",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "categories": [
     "Other"
@@ -105,15 +105,16 @@
                         "uk-UA"
                       ]
                     },
-                    "path": {
+                    "url": {
                       "type": "string",
-                      "markdownDescription": "%config.json-schema-plus.schemas.urls.path%",
-                      "description": "%config.json-schema-plus.schemas.urls.path%"
+                      "markdownDescription": "%config.json-schema-plus.schemas.urls.url%",
+                      "description": "%config.json-schema-plus.schemas.urls.url%"
                     }
                   },
+                  "additionalProperties": false,
                   "required": [
                     "language",
-                    "path"
+                    "url"
                   ]
                 }
               },
@@ -123,6 +124,7 @@
                 "description": "%config.json-schema-plus.schemas.url%"
               }
             },
+            "additionalProperties": false,
             "required": [
               "fileMatch"
             ]
@@ -136,11 +138,11 @@
                 "urls": [
                   {
                     "language": "zh",
-                    "path": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
+                    "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
                   },
                   {
                     "language": "en",
-                    "path": "https://schema.abgox.com/scoop-manifest.en-US.json"
+                    "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
                   }
                 ],
                 "url": "https://schema.abgox.com/scoop-manifest.en-US.json"

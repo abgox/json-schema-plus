@@ -5,5 +5,5 @@
   "config.json-schema-plus.schemas.url": "- Load this default schema if no matching schema is found in `urls`.",
   "config.json-schema-plus.schemas.urls": "- An array to define schema structures for different languages.\n- Automatically loads the appropriate schema based on the current locale.\n- Falls back to the default schema defined in `url` if no match is found.",
   "config.json-schema-plus.schemas.urls.language": "Language",
-  "config.json-schema-plus.schemas.urls.path": "Schema structure"
+  "config.json-schema-plus.schemas.urls.url": "Schema structure"
 }
