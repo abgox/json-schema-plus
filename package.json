@@ -5,7 +5,7 @@
   "type": "module",
   "author": "abgox",
   "publisher": "abgox",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
   "categories": [
     "Other"
@@ -29,6 +29,9 @@
   },
   "engines": {
     "vscode": "^1.99.0"
+  },
+  "sponsor": {
+    "url": "https://abgox.com/donate"
   },
   "activationEvents": [
     "onLanguage:json",
@@ -56,9 +59,9 @@
                 "minItems": 1,
                 "items": {
                   "type": "string",
-                  "minLength": 1,
-                  "uniqueItems": true
-                }
+                  "minLength": 1
+                },
+                "uniqueItems": true
               },
               "urls": {
                 "type": "array",
@@ -174,8 +177,5 @@
     "@vscode/vsce": "^3.3.2",
     "eslint": "^9.23.0",
     "typescript": "^5.8.2"
-  },
-  "dependencies": {
-    "vscode-nls-i18n": "^0.2.4"
   }
 }

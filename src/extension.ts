@@ -5,7 +5,7 @@ import * as fs from "fs";
 const head = "json-schema-plus://abgox";
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log("Schema Plus extension activated");
+    console.log("JSON Schema Plus extension activated");
 
     // 创建自定义的 schema 内容提供者
     const schemaProvider = new SchemaContentProvider();
@@ -72,17 +72,17 @@ function updateSchemaAssociations() {
     // 合并配置：原有非 json-schema-plus 配置 + 新的 json-schema-plus 配置
     const mergedSchemas = [...nativeSchemas, ...newSchemaPlusSchemas];
 
-    jsonConfig.update(
-        "schemas",
-        mergedSchemas,
-        vscode.ConfigurationTarget.Global
-    ).then(() => {
-        console.log("Schema associations updated without affecting user configurations");
-    });
+    const shouldUpdate = safeStringify(existingSchemas) !== safeStringify(mergedSchemas);
+
+    if (shouldUpdate) {
+        jsonConfig.update("schemas", mergedSchemas, vscode.ConfigurationTarget.Global);
+    }
 }
 
 /**
  * 判断是否为 json-schema-plus 管理的关联配置
+ * @param schema 要检查的 schema 配置项
+ * @returns 如果是 json-schema-plus 关联则返回 true，否则返回 false
  */
 function isSchemaPlusAssociation(schema: any): boolean {
     if (!schema || !schema.url) {
@@ -91,19 +91,33 @@ function isSchemaPlusAssociation(schema: any): boolean {
     return schema.url.startsWith(head);
 }
 
+/**
+ * 安全地序列化对象为 JSON 字符串
+ * @param obj 要序列化的对象
+ * @returns 序列化后的字符串或 undefined
+ */
+function safeStringify(obj: any): string | undefined {
+    try {
+        return JSON.stringify(obj);
+    } catch (err) {
+        console.error('Failed to stringify:', err);
+        return undefined;
+    }
+}
+
 // 把相对路径转成绝对路径
 function resolvePath(p: string): string {
-    if (p.startsWith("http")) {
+    if (p.startsWith("http") || path.isAbsolute(p)) {
         return p;
     }
     if (vscode.workspace.workspaceFolders?.length) {
         const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-        if (p.startsWith("./") || p.startsWith("../")) {
-            return path.resolve(root, p);
+        if (p.startsWith("/")) {
+            return path.join(root, p);
         }
-        return path.join(root, p);
+        return path.resolve(root, p);
     }
-    return p;
+    return path.resolve(p);
 }
 
 // 根据当前语言找到最匹配的 schema 路径
@@ -247,5 +261,13 @@ class SchemaContentProvider implements vscode.TextDocumentContentProvider {
 }
 
 export function deactivate() {
-    console.log("Schema Plus extension deactivated");
+    // 获取当前的 json.schemas 配置
+    const jsonConfig = vscode.workspace.getConfiguration("json");
+    const existingSchemas = jsonConfig.get<any[]>("schemas", []);
+
+    // 分离出非 json-schema-plus 关联的配置
+    const nativeSchemas = existingSchemas.filter((schema) => !isSchemaPlusAssociation(schema));
+
+    jsonConfig.update("schemas", nativeSchemas, vscode.ConfigurationTarget.Global);
+    console.log("JSON Schema Plus extension deactivated");
 }

@@ -41,25 +41,31 @@ An extension for [Visual Studio Code](https://code.visualstudio.com/) that provi
 
 1. [Install json-schema-plus](https://marketplace.visualstudio.com/items?itemName=abgox.json-schema-plus).
 
-2. Add the following configuration to your workspace [settings.json](https://code.visualstudio.com/docs/configure/settings) file, refer to [abgox/abyss](https://github.com/abgox/abyss/blob/main/.vscode/settings.json).
+2. Add the following configuration to your [settings.json](https://code.visualstudio.com/docs/configure/settings) file.
+
+   > [!Note]
+   >
+   > Refer to the configurations in [abgox/abyss](https://github.com/abgox/abyss/blob/main/.vscode/settings.json) or [abgox/PSCompletions](https://github.com/abgox/PSCompletions/blob/main/.vscode/settings.json) to use local schema files.
+
    ```json
    "json-schema-plus.schemas": [
-    {
-      "fileMatch": ["bucket/**/*.json"],
-      "urls": [
-        {
-          "language": "zh",
-          "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
-        },
-      ],
-      "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
-    }
+      {
+        "fileMatch": ["bucket/**/*.json"],
+        "urls": [
+          {
+            "language": "zh",
+            "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
+          },
+        ],
+        "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
+      }
    ]
    ```
-3. It will automatically load the corresponding Schema structure according to the current language environment.
+
+3. It will automatically load the corresponding schema architecture according to the current language environment.
    - If it is `zh-CN`.
      - It will match `zh` in `urls`.
      - Then it will load `https://schema.abgox.com/scoop-manifest.zh-CN.json`.
    - If it is `en-US`.
      - There is no relevant definition in `urls`.
-     - Then it will load `"https://schema.abgox.com/scoop-manifest.en-US.json"`.
+     - Then it will load `https://schema.abgox.com/scoop-manifest.en-US.json`.

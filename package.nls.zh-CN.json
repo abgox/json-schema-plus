@@ -1,9 +1,9 @@
 {
   "config.json-schema-plus.title": "Schema Plus 配置",
-  "config.json-schema-plus.schemas.description": "- 增强的 JSON Schema 支持，具有动态语言匹配功能\n- 它可以通过 `urls` 定义不同语言环境下使用的 Schema 架构",
+  "config.json-schema-plus.schemas.description": "[abgox.json-schema-plus](https://json-schema-plus.abgox.com)\n- 增强的 JSON Schema 支持，具有动态语言匹配功能\n- 它可以通过 `urls` 定义不同语言环境下使用的 schema 架构",
   "config.json-schema-plus.schemas.fileMatch": "- 要匹配的 JSON 文件路径模式\n- 可以使用 [glob 语法](https://code.visualstudio.com/docs/editor/glob-patterns)",
-  "config.json-schema-plus.schemas.url": "- 如果 `urls` 中没有匹配到架构，则加载这个默认架构",
-  "config.json-schema-plus.schemas.urls": "- 一个数组，可以定义不同语言下的 schema 架构\n- 它会基于当前的语言环境，尝试加载对应的 schema 架构\n- 如果匹配失败，则加载 `url` 定义的默认架构",
-  "config.json-schema-plus.schemas.urls.language": "语言",
-  "config.json-schema-plus.schemas.urls.url": "schema 架构"
+  "config.json-schema-plus.schemas.url": "如果 `urls` 中没有匹配到架构，则加载这个默认架构",
+  "config.json-schema-plus.schemas.urls": "不同语言下的 schema 架构\n- 它会基于当前的语言环境，尝试加载对应的 schema 架构\n- 如果在 `urls` 中没有找到匹配的架构，则加载 `url` 定义的默认架构",
+  "config.json-schema-plus.schemas.urls.language": "要匹配的语言\n- 一些常见的值:\n  - `zh`\n  - `en`\n  - `zh-CN`\n  - `en-US`",
+  "config.json-schema-plus.schemas.urls.url": "要使用的 schema 架构\n- 它可以是本地文件路径或远程 URL\n- 这里有一些示例:\n\n  ```json\n  \"url\": \"schema/scoop-manifest.zh-CN.json\"\n  ```\n  ```json\n  \"url\": \"https://schema.abgox.com/scoop-manifest.zh-CN.json\"\n  ```"
 }

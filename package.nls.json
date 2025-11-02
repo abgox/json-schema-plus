@@ -1,9 +1,9 @@
 {
   "config.json-schema-plus.title": "Schema Plus Configuration",
-  "config.json-schema-plus.schemas.description": "- Provides multilingual dynamic schema matching for JSON Schema.\n- It allows defining different schema structures for various language environments through `urls`.",
+  "config.json-schema-plus.schemas.description": "[abgox.json-schema-plus](https://json-schema-plus.abgox.com)\n- Provides multilingual dynamic schema matching for JSON Schema.\n- It allows defining different schema architectures for various language environments via `urls`.",
   "config.json-schema-plus.schemas.fileMatch": "- File path patterns to match JSON files.\n- Supports [glob syntax](https://code.visualstudio.com/docs/editor/glob-patterns).",
-  "config.json-schema-plus.schemas.url": "- Load this default schema if no matching schema is found in `urls`.",
-  "config.json-schema-plus.schemas.urls": "- An array to define schema structures for different languages.\n- Automatically loads the appropriate schema based on the current locale.\n- Falls back to the default schema defined in `url` if no match is found.",
-  "config.json-schema-plus.schemas.urls.language": "Language",
-  "config.json-schema-plus.schemas.urls.url": "Schema structure"
+  "config.json-schema-plus.schemas.url": "Load this default schema if no matching schema is found in `urls`.",
+  "config.json-schema-plus.schemas.urls": "Schema architectures for different languages.\n- Automatically loads the appropriate schema based on the current locale.\n- Falls back to the default schema defined in `url` if no match is found in `urls`.",
+  "config.json-schema-plus.schemas.urls.language": "Language code\n- Common values:\n  - `zh`\n  - `en`\n  - `zh-CN`\n  - `en-US`",
+  "config.json-schema-plus.schemas.urls.url": "Schema architecture\n- Can be a local file path or a remote URL.\n- Here are some examples:\n\n  ```json\n  \"url\": \"schema/scoop-manifest.en-US.json\"\n  ```\n  ```json\n  \"url\": \"https://schema.abgox.com/scoop-manifest.en-US.json\"\n  ```"
 }
