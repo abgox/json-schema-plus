@@ -5,7 +5,7 @@
   "type": "module",
   "author": "abgox",
   "publisher": "abgox",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "license": "MIT",
   "categories": [
     "Other"
@@ -44,6 +44,7 @@
       "title": "%config.json-schema-plus.title%",
       "properties": {
         "json-schema-plus.schemas": {
+          "scope": "resource",
           "type": "array",
           "markdownDescription": "%config.json-schema-plus.schemas.description%",
           "description": "%config.json-schema-plus.schemas.description%",

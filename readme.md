@@ -33,6 +33,10 @@
 
 An extension for [Visual Studio Code](https://code.visualstudio.com/) that provides multilingual dynamic schema matching for JSON Schema.
 
+## What's New
+
+See the [Changelog](./changelog.md) for details.
+
 ## How to Use
 
 > [!Tip]

@@ -33,6 +33,10 @@
 
 一个适用于 [Visual Studio Code](https://code.visualstudio.com/) 的扩展，它为 JSON Schema 提供了多语言的动态架构匹配
 
+## 新的变化
+
+请查阅 [更新日志](./changelog.zh-CN.md)
+
 ## 如何使用它
 
 > [!Tip]

@@ -3,11 +3,12 @@ import * as path from "path";
 import * as fs from "fs";
 
 const head = "json-schema-plus://abgox";
+let isUpdatingSchemas = false;
+const output = vscode.window.createOutputChannel("JSON Schema Plus", { log: true });
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log("JSON Schema Plus extension activated");
+    output.info("[json-schema-plus] Extension activated");
 
-    // 创建自定义的 schema 内容提供者
     const schemaProvider = new SchemaContentProvider();
     const providerRegistration =
         vscode.workspace.registerTextDocumentContentProvider(
@@ -16,102 +17,161 @@ export function activate(context: vscode.ExtensionContext) {
         );
     context.subscriptions.push(providerRegistration);
 
-    // 监听配置变化
+    // 配置变化监听
+    let updateTimer: NodeJS.Timeout | undefined;
     const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration("json-schema-plus")) {
-            updateSchemaAssociations();
-            // 通知所有 schema 已更改
-            schemaProvider.refresh();
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(() => {
+                updateSchemaAssociations(schemaProvider);
+            }, 300);
         }
     });
     context.subscriptions.push(configWatcher);
 
-    // 初始化时更新 schema 关联
-    updateSchemaAssociations();
-}
-
-// 更新 schema 关联
-function updateSchemaAssociations() {
-    const currentLanguage = vscode.env.language;
-    const config = vscode.workspace.getConfiguration("json-schema-plus");
-    const schemas = config.get<any[]>("schemas", []);
-
-    // 获取当前的 json.schemas 配置
-    const jsonConfig = vscode.workspace.getConfiguration("json");
-    const existingSchemas = jsonConfig.get<any[]>("schemas", []);
-
-    // 分离出非 json-schema-plus 关联的配置
-    const nativeSchemas = existingSchemas.filter((schema) => !isSchemaPlusAssociation(schema));
-
-    // 基于当前 json-schema-plus 配置生成新的关联
-    const newSchemaPlusSchemas: any[] = [];
-
-    schemas.forEach((schema) => {
-        const { fileMatch, url, urls } = schema;
-
-        if (!fileMatch) {
-            return;
-        }
-
-        // 根据当前语言找到最匹配的 schema 路径
-        let resolvedUrl = findBestMatchingSchema(currentLanguage, urls, url);
-
-        if (resolvedUrl) {
-            resolvedUrl = resolvePath(resolvedUrl);
-
-            const schemaUri = vscode.Uri.parse(`${head}?lang=${currentLanguage}&url=${encodeURIComponent(resolvedUrl!)}`);
-            newSchemaPlusSchemas.push({
-                fileMatch: fileMatch,
-                url: schemaUri.toString()
-            });
-        } else {
-            vscode.window.showErrorMessage(`No schema URL found for pattern ${fileMatch}`);
+    // 监听窗口焦点变化
+    const focusWatcher = vscode.window.onDidChangeWindowState((state) => {
+        if (state.focused) {
+            output.info("[json-schema-plus] Window focused — checking schema associations...");
+            updateSchemaAssociations(schemaProvider);
         }
     });
+    context.subscriptions.push(focusWatcher);
 
-    // 合并配置：原有非 json-schema-plus 配置 + 新的 json-schema-plus 配置
-    const mergedSchemas = [...nativeSchemas, ...newSchemaPlusSchemas];
-
-    const shouldUpdate = safeStringify(existingSchemas) !== safeStringify(mergedSchemas);
-
-    if (shouldUpdate) {
-        jsonConfig.update("schemas", mergedSchemas, vscode.ConfigurationTarget.Global);
-    }
+    // 初始化
+    updateSchemaAssociations(schemaProvider);
 }
 
-/**
- * 判断是否为 json-schema-plus 管理的关联配置
- * @param schema 要检查的 schema 配置项
- * @returns 如果是 json-schema-plus 关联则返回 true，否则返回 false
- */
-function isSchemaPlusAssociation(schema: any): boolean {
-    if (!schema || !schema.url) {
-        return false;
+async function updateSchemaAssociations(schemaProvider: SchemaContentProvider) {
+    if (isUpdatingSchemas) {
+        output.info("[json-schema-plus] updateSchemaAssociations already running, skip.");
+        return;
     }
-    return schema.url.startsWith(head);
-}
+    isUpdatingSchemas = true;
 
-/**
- * 安全地序列化对象为 JSON 字符串
- * @param obj 要序列化的对象
- * @returns 序列化后的字符串或 undefined
- */
-function safeStringify(obj: any): string | undefined {
     try {
-        return JSON.stringify(obj);
+        const currentLanguage = vscode.env.language;
+        const workspaceFolders = vscode.workspace.workspaceFolders || [];
+        const hasSavedWorkspace = !!vscode.workspace.workspaceFile;
+        const target = hasSavedWorkspace
+            ? vscode.ConfigurationTarget.Workspace
+            : vscode.ConfigurationTarget.Global;
+
+        const collectedPluginSchemas: any[] = [];
+
+        // 从每个工作区文件夹收集插件配置
+        for (const folder of workspaceFolders) {
+            const folderConfig = vscode.workspace.getConfiguration("json-schema-plus", folder.uri);
+            const folderSchemas = folderConfig.get<any[]>("schemas", []);
+            for (const schema of folderSchemas) {
+                const { fileMatch, url, urls } = schema;
+                if (!fileMatch) { continue; }
+
+                let resolvedUrl = findBestMatchingSchema(currentLanguage, urls, url);
+                if (!resolvedUrl) { continue; }
+
+                resolvedUrl = resolvePath(resolvedUrl);
+                const schemaUri = vscode.Uri.parse(
+                    `${head}?lang=${currentLanguage}&url=${encodeURIComponent(resolvedUrl)}`
+                );
+                collectedPluginSchemas.push({ fileMatch, url: schemaUri.toString() });
+            }
+        }
+
+        const jsonConfig = vscode.workspace.getConfiguration("json");
+        const inspected = jsonConfig.inspect<any[]>("schemas");
+
+        // 分别取出各层级配置
+        const globalSchemas = inspected?.globalValue ?? [];
+        const workspaceSchemas = inspected?.workspaceValue ?? [];
+
+        // 当前层级实际生效配置（用于 diff）
+        const effectiveSchemas = inspected?.workspaceValue
+            ?? inspected?.globalValue
+            ?? inspected?.defaultValue
+            ?? [];
+
+        // 仅保留工作区原有的用户自定义 schema（非插件生成）
+        const workspaceUserSchemas = hasSavedWorkspace
+            ? workspaceSchemas.filter(s => !isSchemaPlusAssociation(s))
+            : [];
+
+        // 临时工作区或单项目：继承全局的非插件 schema + 插件 schema
+        const globalUserSchemas = !hasSavedWorkspace
+            ? globalSchemas.filter(s => !isSchemaPlusAssociation(s))
+            : [];
+
+        const mergedSchemas = hasSavedWorkspace
+            ? [...workspaceUserSchemas, ...collectedPluginSchemas]
+            : [...globalUserSchemas, ...collectedPluginSchemas];
+
+        const shouldUpdate = stableStringify(mergedSchemas) !== stableStringify(effectiveSchemas);
+
+        if (shouldUpdate) {
+            await jsonConfig.update("schemas", mergedSchemas, target);
+            output.info(`[json-schema-plus] Updated json.schemas in ${hasSavedWorkspace ? "workspace" : "global"} settings.json`);
+        } else {
+            output.info("[json-schema-plus] No schema changes detected.");
+        }
+
+        // 刷新 provider
+        const updatedUrls = collectedPluginSchemas.map(s => s.url);
+        schemaProvider.refresh(updatedUrls);
+
     } catch (err) {
-        console.error('Failed to stringify:', err);
-        return undefined;
+        output.error(`[json-schema-plus] Failed to update schema associations: ${String(err)}`);
+        vscode.window.showErrorMessage(
+            `[json-schema-plus] Failed to update schemas: ${err instanceof Error ? err.message : String(err)}`
+        );
+    } finally {
+        isUpdatingSchemas = false;
     }
 }
 
-// 把相对路径转成绝对路径
-function resolvePath(p: string): string {
-    if (p.startsWith("http") || path.isAbsolute(p)) {
-        return p;
+
+function isSchemaPlusAssociation(schema: any): boolean {
+    return !!(schema && schema.url && schema.url.startsWith(head));
+}
+
+function stableStringify(obj: any): string {
+    try {
+        return JSON.stringify(sortKeys(obj));
+    } catch (e) {
+        output.error(`[json-schema-plus] stableStringify failed: ${String(e)}`);
+        return "";
     }
-    if (vscode.workspace.workspaceFolders?.length) {
-        const root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+}
+
+function sortKeys(obj: any): any {
+    if (Array.isArray(obj)) { return obj.map(sortKeys); }
+    if (obj && typeof obj === "object") {
+        return Object.keys(obj)
+            .sort()
+            .reduce((acc, key) => {
+                acc[key] = sortKeys(obj[key]);
+                return acc;
+            }, {} as any);
+    }
+    return obj;
+}
+
+function resolvePath(p: string): string {
+    if (!p) { return p; }
+    if (p.startsWith("http")) { return p; }
+
+    if (p.startsWith("file:")) {
+        try {
+            return vscode.Uri.parse(p).fsPath;
+        } catch {
+            return p.replace(/^file:\/*/, "");
+        }
+    }
+
+    if (path.isAbsolute(p)) { return p; }
+
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length) {
+        const root = workspaceFolders[0].uri.fsPath;
         if (p.startsWith("/")) {
             return path.join(root, p);
         }
@@ -120,113 +180,82 @@ function resolvePath(p: string): string {
     return path.resolve(p);
 }
 
-// 根据当前语言找到最匹配的 schema 路径
 function findBestMatchingSchema(
     currentLanguage: string,
     urls?: Array<{ language: string; url: string }>,
     defaultUrl?: string
 ): string | undefined {
-    // 如果没有 urls 数组，直接返回默认 url
-    if (!urls || urls.length === 0) {
-        return defaultUrl;
-    }
+    if (!urls || urls.length === 0) { return defaultUrl; }
 
-    // 精确匹配当前语言
     const exactMatch = urls.find(
         (item) => item.language.toLowerCase() === currentLanguage.toLowerCase()
     );
-    if (exactMatch) {
-        return exactMatch.url;
-    }
+    if (exactMatch) { return exactMatch.url; }
 
-    // 尝试匹配语言的主要部分（如 'zh-cn' 匹配 'zh'）
-    const languageMainPart = currentLanguage.split("-")[0].toLowerCase();
+    const mainPart = currentLanguage.split("-")[0].toLowerCase();
     const mainPartMatch = urls.find(
-        (item) => item.language.toLowerCase().split("-")[0] === languageMainPart
+        (item) => item.language.toLowerCase().split("-")[0] === mainPart
     );
-    if (mainPartMatch) {
-        return mainPartMatch.url;
-    }
+    if (mainPartMatch) { return mainPartMatch.url; }
 
-    // 最后返回默认 url
     return defaultUrl;
 }
 
 class SchemaContentProvider implements vscode.TextDocumentContentProvider {
     private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+    private _providedUris = new Set<string>();
 
     get onDidChange(): vscode.Event<vscode.Uri> {
         return this._onDidChange.event;
     }
 
     provideTextDocumentContent(uri: vscode.Uri): string | Thenable<string> {
-        // 从 URI 查询参数中提取实际的 schema URL
-        const query = new URLSearchParams(uri.query);
-        const schemaUrl = query.get("url");
-
-        if (!schemaUrl) {
-            console.error("No schema URL provided in the URI");
+        let query: URLSearchParams;
+        try {
+            query = new URLSearchParams(uri.query);
+        } catch {
+            output.warn("[json-schema-plus] Invalid URI query detected");
             return JSON.stringify({});
         }
 
+        const schemaUrl = query.get("url");
+        if (!schemaUrl) {
+            output.warn("[json-schema-plus] No schema URL provided in URI");
+            return JSON.stringify({});
+        }
+
+        this._providedUris.add(uri.toString());
+
         try {
-            // 处理 HTTP/HTTPS URL
             if (schemaUrl.startsWith("http://") || schemaUrl.startsWith("https://")) {
-                console.log(`Attempting to fetch remote schema: ${schemaUrl}`);
-                // 注意：在 VSCode 扩展中，我们应该使用 fetch API 或其他 HTTP 客户端
-                // 由于这是同步操作，我们需要返回一个 Promise
+                output.info(`[json-schema-plus] Fetching remote schema: ${schemaUrl}`);
                 return this.fetchRemoteSchema(schemaUrl);
             }
 
-            // 处理本地文件路径
             const filePath = schemaUrl.startsWith("file:")
-                ? schemaUrl.slice(5)
+                ? vscode.Uri.parse(schemaUrl).fsPath
                 : schemaUrl;
-            console.log(`Attempting to read local schema file: ${filePath}`);
 
-            // 检查文件是否存在
             if (fs.existsSync(filePath)) {
-                try {
-                    const content = fs.readFileSync(filePath, "utf8");
-                    console.log(`Successfully read schema file: ${filePath}`);
-                    return content;
-                } catch (readError) {
-                    console.error(`Error reading schema file ${filePath}:`, readError);
-                    // 返回详细的错误信息
-                    return JSON.stringify({
-                        error: "Failed to read schema file",
-                        filePath: filePath,
-                        message:
-                            readError instanceof Error
-                                ? readError.message
-                                : String(readError),
-                    });
-                }
-            } else {
-                console.error(`Schema file not found: ${filePath}`);
-                // 尝试在所有工作区文件夹中查找文件
-                const workspaceFolders = vscode.workspace.workspaceFolders;
-                if (workspaceFolders) {
-                    for (const folder of workspaceFolders) {
-                        const potentialPath = path.join(
-                            folder.uri.fsPath,
-                            schemaUrl.startsWith("/") ? schemaUrl.substring(1) : schemaUrl
-                        );
-                        if (fs.existsSync(potentialPath)) {
-                            console.log(`Found schema file in workspace: ${potentialPath}`);
-                            return fs.readFileSync(potentialPath, "utf8");
-                        }
+                const content = fs.readFileSync(filePath, "utf8");
+                output.info(`[json-schema-plus] Loaded local schema: ${filePath}`);
+                return content;
+            }
+
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (workspaceFolders) {
+                for (const folder of workspaceFolders) {
+                    const potential = path.join(folder.uri.fsPath, schemaUrl);
+                    if (fs.existsSync(potential)) {
+                        output.info(`[json-schema-plus] Found schema in workspace: ${potential}`);
+                        return fs.readFileSync(potential, "utf8");
                     }
                 }
-
-                // 文件不存在，返回错误信息
-                return JSON.stringify({
-                    error: "Schema file not found",
-                    filePath: filePath,
-                });
             }
+
+            return JSON.stringify({ error: "Schema file not found", filePath });
         } catch (error) {
-            console.error("Error providing schema content:", error);
+            output.error(`[json-schema-plus] Error providing schema content: ${String(error)}`);
             return JSON.stringify({
                 error: "Unexpected error",
                 message: error instanceof Error ? error.message : String(error),
@@ -234,40 +263,33 @@ class SchemaContentProvider implements vscode.TextDocumentContentProvider {
         }
     }
 
-    // 异步获取远程 schema
     private async fetchRemoteSchema(url: string): Promise<string> {
         try {
             const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) { throw new Error(`HTTP ${response.status}`); }
             const content = await response.text();
-            console.log(`Successfully fetched remote schema: ${url}`);
             return content;
         } catch (error) {
-            console.error(`Error fetching remote schema ${url}:`, error);
+            output.error(`[json-schema-plus] Failed to fetch remote schema ${url}: ${String(error)}`);
             return JSON.stringify({
                 error: "Failed to fetch remote schema",
-                url: url,
+                url,
                 message: error instanceof Error ? error.message : String(error),
             });
         }
     }
 
-    // 刷新所有 schema
-    refresh() {
-        this._onDidChange.fire(vscode.Uri.parse(`${head}*`));
+    refresh(urls?: string[]) {
+        const targets = urls && urls.length ? urls : Array.from(this._providedUris);
+        for (const u of targets) {
+            try {
+                this._onDidChange.fire(vscode.Uri.parse(u));
+            } catch { /* ignore invalid URIs */ }
+            this._providedUris.delete(u);
+        }
     }
 }
 
 export function deactivate() {
-    // 获取当前的 json.schemas 配置
-    const jsonConfig = vscode.workspace.getConfiguration("json");
-    const existingSchemas = jsonConfig.get<any[]>("schemas", []);
-
-    // 分离出非 json-schema-plus 关联的配置
-    const nativeSchemas = existingSchemas.filter((schema) => !isSchemaPlusAssociation(schema));
-
-    jsonConfig.update("schemas", nativeSchemas, vscode.ConfigurationTarget.Global);
-    console.log("JSON Schema Plus extension deactivated");
+    output.info("[json-schema-plus] Extension deactivated");
 }
