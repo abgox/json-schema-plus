@@ -67,9 +67,18 @@ See the [Changelog](./changelog.md) for details.
    ```
 
 3. It will automatically load the corresponding schema architecture according to the current language environment.
+
    - If it is `zh-CN`.
      - It will match `zh` in `urls`.
      - Then it will load `https://schema.abgox.com/scoop-manifest.zh-CN.json`.
    - If it is `en-US`.
      - There is no relevant definition in `urls`.
      - Then it will load `https://schema.abgox.com/scoop-manifest.en-US.json`.
+
+4. To ensure consistent environments, you may also need to set `.vscode/extensions.json`.
+
+   ```json
+   {
+     "recommendations": ["abgox.json-schema-plus"]
+   }
+   ```

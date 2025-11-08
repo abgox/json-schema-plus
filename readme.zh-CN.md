@@ -49,7 +49,7 @@
 
    > [!Note]
    >
-   > 如果使用本地 schema 文件，参考 [abgox/abyss](https://github.com/abgox/abyss/blob/main/.vscode/settings.json) 或 [abgox/PSCompletions](https://github.com/abgox/PSCompletions/blob/main/.vscode/settings.json)
+   > 如果使用本地 schema 文件，参考 [abgox/abyss](https://github.com/abgox/abyss/blob/main/.vscode/settings.json) 或 [abgox/PSCompletions](https://github.com/abgox/PSCompletions/blob/main/.vscode/settings.json) 的相关配置文件
 
    ```json
    "json-schema-plus.schemas": [
@@ -67,9 +67,18 @@
    ```
 
 3. 它会根据当前的语言环境自动加载对应的 Schema 架构
+
    - 如果为 `zh-CN`
      - 它会匹配到 `urls` 中的 `zh`
      - 加载 `https://schema.abgox.com/scoop-manifest.zh-CN.json`
    - 如果为 `en-US`
      - 在 `urls` 中没有相关定义
      - 加载 `https://schema.abgox.com/scoop-manifest.en-US.json`
+
+4. 为了确保环境一致，你可能还需要设置 `.vscode/extensions.json`
+
+   ```json
+   {
+     "recommendations": ["abgox.json-schema-plus"]
+   }
+   ```
