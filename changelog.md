@@ -2,6 +2,10 @@
 
 # Changelog
 
+## 0.2.0
+
+- Use URLs for schema associations directly
+
 ## 0.1.0
 
 - Support [workspace](https://code.visualstudio.com/docs/editing/workspaces/workspaces).

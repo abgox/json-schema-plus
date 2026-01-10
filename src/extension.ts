@@ -1,21 +1,11 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import * as fs from "fs";
 
-const head = "json-schema-plus://abgox";
 let isUpdatingSchemas = false;
 const output = vscode.window.createOutputChannel("JSON Schema Plus", { log: true });
 
 export function activate(context: vscode.ExtensionContext) {
     output.info("[json-schema-plus] Extension activated");
-
-    const schemaProvider = new SchemaContentProvider();
-    const providerRegistration =
-        vscode.workspace.registerTextDocumentContentProvider(
-            "json-schema-plus",
-            schemaProvider
-        );
-    context.subscriptions.push(providerRegistration);
 
     // 配置变化监听
     let updateTimer: NodeJS.Timeout | undefined;
@@ -23,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (e.affectsConfiguration("json-schema-plus")) {
             clearTimeout(updateTimer);
             updateTimer = setTimeout(() => {
-                updateSchemaAssociations(schemaProvider);
+                updateSchemaAssociations();
             }, 300);
         }
     });
@@ -33,16 +23,16 @@ export function activate(context: vscode.ExtensionContext) {
     const focusWatcher = vscode.window.onDidChangeWindowState((state) => {
         if (state.focused) {
             output.info("[json-schema-plus] Window focused — checking schema associations...");
-            updateSchemaAssociations(schemaProvider);
+            updateSchemaAssociations();
         }
     });
     context.subscriptions.push(focusWatcher);
 
     // 初始化
-    updateSchemaAssociations(schemaProvider);
+    updateSchemaAssociations();
 }
 
-async function updateSchemaAssociations(schemaProvider: SchemaContentProvider) {
+async function updateSchemaAssociations() {
     if (isUpdatingSchemas) {
         output.info("[json-schema-plus] updateSchemaAssociations already running, skip.");
         return;
@@ -71,10 +61,18 @@ async function updateSchemaAssociations(schemaProvider: SchemaContentProvider) {
                 if (!resolvedUrl) { continue; }
 
                 resolvedUrl = resolvePath(resolvedUrl);
-                const schemaUri = vscode.Uri.parse(
-                    `${head}?lang=${currentLanguage}&url=${encodeURIComponent(resolvedUrl)}`
-                );
-                collectedPluginSchemas.push({ fileMatch, url: schemaUri.toString() });
+                let schemaUri: string;
+                if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
+                    const urlObj = new URL(resolvedUrl);
+                    schemaUri = urlObj.toString();
+                } else {
+                    // file://
+                    const fileUri = vscode.Uri.file(resolvedUrl);
+                    const urlObj = new URL(fileUri.toString());
+                    schemaUri = urlObj.toString();
+                }
+
+                collectedPluginSchemas.push({ fileMatch, url: schemaUri, '__generated_by_abgox-json-schema-plus': true });
             }
         }
 
@@ -114,10 +112,6 @@ async function updateSchemaAssociations(schemaProvider: SchemaContentProvider) {
             output.info("[json-schema-plus] No schema changes detected.");
         }
 
-        // 刷新 provider
-        const updatedUrls = collectedPluginSchemas.map(s => s.url);
-        schemaProvider.refresh(updatedUrls);
-
     } catch (err) {
         output.error(`[json-schema-plus] Failed to update schema associations: ${String(err)}`);
         vscode.window.showErrorMessage(
@@ -128,9 +122,11 @@ async function updateSchemaAssociations(schemaProvider: SchemaContentProvider) {
     }
 }
 
-
 function isSchemaPlusAssociation(schema: any): boolean {
-    return !!(schema && schema.url && schema.url.startsWith(head));
+    if (!schema || !schema.url) {
+        return false;
+    }
+    return schema['__generated_by_abgox-json-schema-plus'] || schema.url.startsWith("json-schema-plus://abgox");
 }
 
 function stableStringify(obj: any): string {
@@ -172,9 +168,6 @@ function resolvePath(p: string): string {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length) {
         const root = workspaceFolders[0].uri.fsPath;
-        if (p.startsWith("/")) {
-            return path.join(root, p);
-        }
         return path.resolve(root, p);
     }
     return path.resolve(p);
@@ -199,95 +192,6 @@ function findBestMatchingSchema(
     if (mainPartMatch) { return mainPartMatch.url; }
 
     return defaultUrl;
-}
-
-class SchemaContentProvider implements vscode.TextDocumentContentProvider {
-    private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
-    private _providedUris = new Set<string>();
-
-    get onDidChange(): vscode.Event<vscode.Uri> {
-        return this._onDidChange.event;
-    }
-
-    provideTextDocumentContent(uri: vscode.Uri): string | Thenable<string> {
-        let query: URLSearchParams;
-        try {
-            query = new URLSearchParams(uri.query);
-        } catch {
-            output.warn("[json-schema-plus] Invalid URI query detected");
-            return JSON.stringify({});
-        }
-
-        const schemaUrl = query.get("url");
-        if (!schemaUrl) {
-            output.warn("[json-schema-plus] No schema URL provided in URI");
-            return JSON.stringify({});
-        }
-
-        this._providedUris.add(uri.toString());
-
-        try {
-            if (schemaUrl.startsWith("http://") || schemaUrl.startsWith("https://")) {
-                output.info(`[json-schema-plus] Fetching remote schema: ${schemaUrl}`);
-                return this.fetchRemoteSchema(schemaUrl);
-            }
-
-            const filePath = schemaUrl.startsWith("file:")
-                ? vscode.Uri.parse(schemaUrl).fsPath
-                : schemaUrl;
-
-            if (fs.existsSync(filePath)) {
-                const content = fs.readFileSync(filePath, "utf8");
-                output.info(`[json-schema-plus] Loaded local schema: ${filePath}`);
-                return content;
-            }
-
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (workspaceFolders) {
-                for (const folder of workspaceFolders) {
-                    const potential = path.join(folder.uri.fsPath, schemaUrl);
-                    if (fs.existsSync(potential)) {
-                        output.info(`[json-schema-plus] Found schema in workspace: ${potential}`);
-                        return fs.readFileSync(potential, "utf8");
-                    }
-                }
-            }
-
-            return JSON.stringify({ error: "Schema file not found", filePath });
-        } catch (error) {
-            output.error(`[json-schema-plus] Error providing schema content: ${String(error)}`);
-            return JSON.stringify({
-                error: "Unexpected error",
-                message: error instanceof Error ? error.message : String(error),
-            });
-        }
-    }
-
-    private async fetchRemoteSchema(url: string): Promise<string> {
-        try {
-            const response = await fetch(url);
-            if (!response.ok) { throw new Error(`HTTP ${response.status}`); }
-            const content = await response.text();
-            return content;
-        } catch (error) {
-            output.error(`[json-schema-plus] Failed to fetch remote schema ${url}: ${String(error)}`);
-            return JSON.stringify({
-                error: "Failed to fetch remote schema",
-                url,
-                message: error instanceof Error ? error.message : String(error),
-            });
-        }
-    }
-
-    refresh(urls?: string[]) {
-        const targets = urls && urls.length ? urls : Array.from(this._providedUris);
-        for (const u of targets) {
-            try {
-                this._onDidChange.fire(vscode.Uri.parse(u));
-            } catch { /* ignore invalid URIs */ }
-            this._providedUris.delete(u);
-        }
-    }
 }
 
 export function deactivate() {

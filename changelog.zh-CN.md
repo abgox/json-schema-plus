@@ -2,6 +2,10 @@
 
 # 更新日志
 
+## 0.2.0
+
+- 直接使用 URL 来关联 JSON Schema
+
 ## 0.1.0
 
 - 支持 [工作区](https://code.visualstudio.com/docs/editing/workspaces/workspaces)
