@@ -1,9 +1,10 @@
 {
-  "config.json-schema-plus.title": "Schema Plus Configuration",
-  "config.json-schema-plus.schemas.description": "[abgox.json-schema-plus](https://json-schema-plus.abgox.com)\n- Provides multilingual dynamic schema matching for JSON Schema.\n- It allows defining different schema architectures for various language environments via `urls`.",
-  "config.json-schema-plus.schemas.fileMatch": "- File path patterns to match JSON files.\n- Supports [glob syntax](https://code.visualstudio.com/docs/editor/glob-patterns).",
-  "config.json-schema-plus.schemas.url": "Load this default schema if no matching schema is found in `urls`.",
-  "config.json-schema-plus.schemas.urls": "Schema architectures for different languages.\n- Automatically loads the appropriate schema based on the current locale.\n- Falls back to the default schema defined in `url` if no match is found in `urls`.",
-  "config.json-schema-plus.schemas.urls.language": "Language code\n- Common values:\n  - `zh`\n  - `en`\n  - `zh-CN`\n  - `en-US`",
-  "config.json-schema-plus.schemas.urls.url": "Schema architecture\n- Can be a local file path or a remote URL.\n- Here are some examples:\n\n  ```json\n  \"url\": \"schema/scoop-manifest.en-US.json\"\n  ```\n  ```json\n  \"url\": \"https://schema.abgox.com/scoop-manifest.en-US.json\"\n  ```"
+  "config.json-schema-plus.title": "JSON Schema Plus",
+  "config.json-schema-plus.schemas.description": "- Provides multilingual dynamic schema matching based on `json.schemas`.\n- It allows defining different schema architectures for various language environments via `urls`.\n- `url` is the default schema to load if no matching schema is found in `urls`.",
+  "config.json-schema-plus.schemas.fileMatch": "An array of file patterns to match against when resolving JSON files to schemas.\n- `*` and `**` can be used as a wildcard.\n- Exclusion patterns can also be defined and start with `!`.\n- A file matches when there is at least one matching pattern and the last matching pattern is not an exclusion pattern.",
+  "config.json-schema-plus.schemas.fileMatchItem": "A file pattern to match against when resolving JSON files to schemas.\n- `*` and `**` can be used as a wildcard.\n- Exclusion patterns can also be defined and start with `!`.",
+  "config.json-schema-plus.schemas.url": "A URL or absolute file path to default schema.\n- Can be a relative path (starting with `./`) in workspace and workspace folder settings.\n- It will be loaded if no matching schema is found in `urls`.\n- Here are some examples:\n\n  ```json\n  \"url\": \"./schema/scoop-manifest.en-US.json\"\n  ```\n  ```json\n  \"url\": \"https://schema.abgox.com/scoop-manifest.en-US.json\"\n  ```",
+  "config.json-schema-plus.schemas.urls": "Schema architectures for different languages.\n- It will load the schema that matches the current language environment.\n- Falls back to the default schema defined in `url` if no matching schema is found in `urls`.",
+  "config.json-schema-plus.schemas.urls.language": "Language code\n- `zh`\n- `en`\n- `zh-CN`\n- `en-US`\n- ...",
+  "config.json-schema-plus.schemas.urls.url": "A URL or absolute file path to a schema.\n- Can be a relative path (starting with `./`) in workspace and workspace folder settings.\n- Here are some examples:\n\n  ```json\n  \"url\": \"./schema/scoop-manifest.en-US.json\"\n  ```\n  ```json\n  \"url\": \"https://schema.abgox.com/scoop-manifest.en-US.json\"\n  ```"
 }

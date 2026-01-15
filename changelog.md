@@ -2,6 +2,10 @@
 
 # Changelog
 
+## 0.2.1
+
+- Improved hover tips for configuration items.
+
 ## 0.2.0
 
 - Use URLs for schema associations directly
