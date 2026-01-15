@@ -5,7 +5,7 @@
         <img src="https://img.shields.io/github/license/abgox/json-schema-plus" alt="license" />
     </a>
     <a href="https://github.com/abgox/json-schema-plus">
-        <img src="https://img.shields.io/github/v/release/abgox/json-schema-plus?label=version" alt="version" />
+        <img src="https://img.shields.io/visual-studio-marketplace/v/abgox.json-schema-plus" alt="version" />
     </a>
     <a href="https://github.com/abgox/json-schema-plus">
         <img src="https://img.shields.io/github/languages/code-size/abgox/json-schema-plus" alt="code size" />
@@ -54,14 +54,16 @@
    ```json
    "json-schema-plus.schemas": [
       {
-        "fileMatch": ["bucket/**/*.json"],
+        "fileMatch": [
+          "bucket/**/*.json"
+        ],
+        "url": "https://schema.abgox.com/scoop-manifest.en-US.json",
         "urls": [
           {
             "language": "zh",
             "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
           },
-        ],
-        "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
+        ]
       }
    ]
    ```
