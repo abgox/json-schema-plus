@@ -158,14 +158,13 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "pnpm run compile && pnpm run lint",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "npm run compile && vsce publish"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -177,6 +176,7 @@
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.3.2",
     "eslint": "^9.23.0",
+    "ovsx": "^0.10.8",
     "typescript": "^5.8.2"
   }
 }
