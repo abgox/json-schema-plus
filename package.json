@@ -5,7 +5,7 @@
   "type": "module",
   "author": "abgox",
   "publisher": "abgox",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "MIT",
   "categories": [
     "Other"
@@ -140,17 +140,13 @@
                 "fileMatch": [
                   "bucket/**/*.json"
                 ],
+                "url": "https://schema.abgox.com/scoop-manifest.en-US.json",
                 "urls": [
                   {
                     "language": "zh",
                     "url": "https://schema.abgox.com/scoop-manifest.zh-CN.json"
-                  },
-                  {
-                    "language": "en",
-                    "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
                   }
-                ],
-                "url": "https://schema.abgox.com/scoop-manifest.en-US.json"
+                ]
               }
             ]
           ]
