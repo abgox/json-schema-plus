@@ -1,14 +1,12 @@
 import * as vscode from "vscode";
-import * as path from "path";
 
 let isUpdatingSchemas = false;
+let updateTimer: ReturnType<typeof setTimeout> | undefined;
 const output = vscode.window.createOutputChannel("JSON Schema Plus", { log: true });
 
 export function activate(context: vscode.ExtensionContext) {
-    output.info("[json-schema-plus] Extension activated");
+    output.info("Extension activated");
 
-    // 配置变化监听
-    let updateTimer: NodeJS.Timeout | undefined;
     const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration("json-schema-plus")) {
             clearTimeout(updateTimer);
@@ -19,28 +17,32 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(configWatcher);
 
-    // 监听窗口焦点变化
     const focusWatcher = vscode.window.onDidChangeWindowState((state) => {
         if (state.focused) {
-            output.info("[json-schema-plus] Window focused — checking schema associations...");
+            output.info("Window focused — checking schema associations...");
             updateSchemaAssociations();
         }
     });
     context.subscriptions.push(focusWatcher);
 
-    // 初始化
+    const folderWatcher = vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        output.info("Workspace folders changed — updating schema associations...");
+        updateSchemaAssociations();
+    });
+    context.subscriptions.push(folderWatcher);
+
     updateSchemaAssociations();
 }
 
 async function updateSchemaAssociations() {
     if (isUpdatingSchemas) {
-        output.info("[json-schema-plus] updateSchemaAssociations already running, skip.");
+        output.info("updateSchemaAssociations already running, skip.");
         return;
     }
     isUpdatingSchemas = true;
 
     try {
-        const currentLanguage = vscode.env.language;
+        const currentLanguage = resolveLanguage();
         const workspaceFolders = vscode.workspace.workspaceFolders || [];
         const hasSavedWorkspace = !!vscode.workspace.workspaceFile;
         const target = hasSavedWorkspace
@@ -49,7 +51,6 @@ async function updateSchemaAssociations() {
 
         const collectedPluginSchemas: any[] = [];
 
-        // 从每个工作区文件夹收集插件配置
         for (const folder of workspaceFolders) {
             const folderConfig = vscode.workspace.getConfiguration("json-schema-plus", folder.uri);
             const folderSchemas = folderConfig.get<any[]>("schemas", []);
@@ -57,20 +58,10 @@ async function updateSchemaAssociations() {
                 const { fileMatch, url, urls } = schema;
                 if (!fileMatch) { continue; }
 
-                let resolvedUrl = findBestMatchingSchema(currentLanguage, urls, url);
+                const resolvedUrl = findBestMatchingSchema(currentLanguage, urls, url);
                 if (!resolvedUrl) { continue; }
 
-                resolvedUrl = resolvePath(resolvedUrl);
-                let schemaUri: string;
-                if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
-                    const urlObj = new URL(resolvedUrl);
-                    schemaUri = urlObj.toString();
-                } else {
-                    // file://
-                    const fileUri = vscode.Uri.file(resolvedUrl);
-                    const urlObj = new URL(fileUri.toString());
-                    schemaUri = urlObj.toString();
-                }
+                const schemaUri = toSchemaUri(resolvedUrl);
 
                 collectedPluginSchemas.push({ fileMatch, url: schemaUri, '__generated_by_abgox-json-schema-plus': true });
             }
@@ -79,22 +70,18 @@ async function updateSchemaAssociations() {
         const jsonConfig = vscode.workspace.getConfiguration("json");
         const inspected = jsonConfig.inspect<any[]>("schemas");
 
-        // 分别取出各层级配置
         const globalSchemas = inspected?.globalValue ?? [];
         const workspaceSchemas = inspected?.workspaceValue ?? [];
 
-        // 当前层级实际生效配置（用于 diff）
         const effectiveSchemas = inspected?.workspaceValue
             ?? inspected?.globalValue
             ?? inspected?.defaultValue
             ?? [];
 
-        // 仅保留工作区原有的用户自定义 schema（非插件生成）
         const workspaceUserSchemas = hasSavedWorkspace
             ? workspaceSchemas.filter(s => !isSchemaPlusAssociation(s))
             : [];
 
-        // 临时工作区或单项目：继承全局的非插件 schema + 插件 schema
         const globalUserSchemas = !hasSavedWorkspace
             ? globalSchemas.filter(s => !isSchemaPlusAssociation(s))
             : [];
@@ -107,15 +94,15 @@ async function updateSchemaAssociations() {
 
         if (shouldUpdate) {
             await jsonConfig.update("schemas", mergedSchemas, target);
-            output.info(`[json-schema-plus] Updated json.schemas in ${hasSavedWorkspace ? "workspace" : "global"} settings.json`);
+            output.info(`Updated json.schemas in ${hasSavedWorkspace ? "workspace" : "global"} settings.json`);
         } else {
-            output.info("[json-schema-plus] No schema changes detected.");
+            output.info("No schema changes detected.");
         }
 
     } catch (err) {
-        output.error(`[json-schema-plus] Failed to update schema associations: ${String(err)}`);
+        output.error(`Failed to update schema associations: ${String(err)}`);
         vscode.window.showErrorMessage(
-            `[json-schema-plus] Failed to update schemas: ${err instanceof Error ? err.message : String(err)}`
+            `Failed to update schemas: ${err instanceof Error ? err.message : String(err)}`
         );
     } finally {
         isUpdatingSchemas = false;
@@ -133,7 +120,7 @@ function stableStringify(obj: any): string {
     try {
         return JSON.stringify(sortKeys(obj));
     } catch (e) {
-        output.error(`[json-schema-plus] stableStringify failed: ${String(e)}`);
+        output.error(`stableStringify failed: ${String(e)}`);
         return "";
     }
 }
@@ -151,26 +138,42 @@ function sortKeys(obj: any): any {
     return obj;
 }
 
-function resolvePath(p: string): string {
-    if (!p) { return p; }
-    if (p.startsWith("http")) { return p; }
+function toSchemaUri(resolvedUrl: string): string {
+    if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
+        return resolvedUrl;
+    }
 
-    if (p.startsWith("file:")) {
+    if (resolvedUrl.startsWith("file:")) {
         try {
-            return vscode.Uri.parse(p).fsPath;
+            return vscode.Uri.parse(resolvedUrl).toString();
         } catch {
-            return p.replace(/^file:\/*/, "");
+            return resolvedUrl;
         }
     }
 
-    if (path.isAbsolute(p)) { return p; }
+    if (isAbsolute(resolvedUrl)) {
+        try {
+            return vscode.Uri.file(resolvedUrl).toString();
+        } catch {
+            return resolvedUrl;
+        }
+    }
 
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length) {
-        const root = workspaceFolders[0].uri.fsPath;
-        return path.resolve(root, p);
+        try {
+            return vscode.Uri.joinPath(workspaceFolders[0].uri, resolvedUrl).toString();
+        } catch { }
     }
-    return path.resolve(p);
+
+    return resolvedUrl;
+}
+
+function isAbsolute(p: string): boolean {
+    if (p.startsWith("/")) { return true; }
+    if (/^[a-zA-Z]:[\\\/]/.test(p)) { return true; }
+    if (p.startsWith("\\\\")) { return true; }
+    return false;
 }
 
 function findBestMatchingSchema(
@@ -194,6 +197,18 @@ function findBestMatchingSchema(
     return defaultUrl;
 }
 
+function resolveLanguage(): string {
+    const vscodeLang = vscode.env.language;
+    if (vscodeLang && vscodeLang !== "en") { return vscodeLang; }
+
+    if (typeof navigator !== "undefined" && navigator.language) {
+        return navigator.language;
+    }
+
+    return vscodeLang;
+}
+
 export function deactivate() {
-    output.info("[json-schema-plus] Extension deactivated");
+    clearTimeout(updateTimer);
+    output.info("Extension deactivated");
 }

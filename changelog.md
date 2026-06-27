@@ -2,6 +2,11 @@
 
 # Changelog
 
+## 0.3.0
+
+- Add web extension support (vscode.dev)
+- Bundle with esbuild
+
 ## 0.2.1
 
 - Improved hover tips for configuration items.

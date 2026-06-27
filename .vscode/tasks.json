@@ -1,19 +1,33 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never"
-			},
+			"label": "build",
+			"type": "shell",
+			"command": "node esbuild.mjs",
+			"problemMatcher": "$esbuild",
 			"group": {
 				"kind": "build",
 				"isDefault": true
+			}
+		},
+		{
+			"label": "watch",
+			"type": "shell",
+			"command": "node esbuild.mjs --watch",
+			"isBackground": true,
+			"problemMatcher": {
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "build start",
+					"endsPattern": "build finished"
+				}
+			},
+			"presentation": {
+				"reveal": "never"
 			}
 		}
 	]

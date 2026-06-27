@@ -1,6 +1,9 @@
+.github/**
 .vscode/**
 .vscode-test/**
+.vscode-test-web/**
 src/**
+out/**
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
@@ -10,3 +13,9 @@ vsc-extension-quickstart.md
 **/*.ts
 **/.vscode-test.*
 **/.jj/**
+**/.github/**
+**/pnpm-lock.yaml
+**/pnpm-workspace.yaml
+esbuild.mjs
+readme.*
+changelog.*

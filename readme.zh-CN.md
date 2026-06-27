@@ -5,7 +5,7 @@
         <img src="https://img.shields.io/github/license/abgox/json-schema-plus" alt="license" />
     </a>
     <a href="https://github.com/abgox/json-schema-plus">
-        <img src="https://img.shields.io/visual-studio-marketplace/v/abgox.json-schema-plus" alt="version" />
+        <img src="https://img.shields.io/github/package-json/v/abgox/json-schema-plus" alt="version" />
     </a>
     <a href="https://github.com/abgox/json-schema-plus">
         <img src="https://img.shields.io/github/languages/code-size/abgox/json-schema-plus" alt="code size" />
@@ -15,9 +15,6 @@
     </a>
     <a href="https://github.com/abgox/json-schema-plus">
         <img src="https://img.shields.io/github/created-at/abgox/json-schema-plus" alt="created" />
-    </a>
-    <a href="https://marketplace.visualstudio.com/items?itemName=abgox.json-schema-plus">
-        <img src="https://img.shields.io/visual-studio-marketplace/d/abgox.json-schema-plus" alt="download" />
     </a>
 </p>
 
@@ -32,6 +29,8 @@
 <img src="./icon.png" alt="logo" width="128px"/>
 
 一个适用于 [Visual Studio Code](https://code.visualstudio.com/) 的扩展，它为 JSON Schema 提供了多语言的动态架构匹配
+
+> 同时支持 [VS Code 网页端](https://vscode.dev)
 
 ## 新的变化
 
@@ -69,7 +68,6 @@
    ```
 
 3. 它会根据当前的语言环境自动加载对应的 Schema 架构
-
    - 如果为 `zh-CN`
      - 它会匹配到 `urls` 中的 `zh`
      - 加载 `https://schema.abgox.com/scoop-manifest.zh-CN.json`
