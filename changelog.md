@@ -2,6 +2,11 @@
 
 # Changelog
 
+## 0.3.1
+
+- Add `extensionKind` for remote development support
+- Keep README and changelog visible in marketplace
+
 ## 0.3.0
 
 - Add web extension support (vscode.dev)

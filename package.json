@@ -4,7 +4,7 @@
   "description": "Provides multilingual dynamic schema matching for JSON Schema.",
   "author": "abgox",
   "publisher": "abgox",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "categories": [
     "Other"
@@ -29,6 +29,10 @@
   "engines": {
     "vscode": "^1.99.0"
   },
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
   "sponsor": {
     "url": "https://abgox.com/donate"
   },

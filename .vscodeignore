@@ -17,5 +17,3 @@ vsc-extension-quickstart.md
 **/pnpm-lock.yaml
 **/pnpm-workspace.yaml
 esbuild.mjs
-readme.*
-changelog.*
